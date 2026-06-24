@@ -1,0 +1,31 @@
+# Small smoke test: one month, one flow, one measure, one HTS2 chapter.
+year: 2026
+months: [4]
+flows: [import_general]
+
+measures:
+  import_general: [CIF]
+
+split:
+  strategy: hts2
+  hts2_chapters: ["01"]
+
+directories:
+  downloads: downloads
+  payloads: output/payloads
+  logs: logs
+
+runtime:
+  dry_run: false
+  skip_existing: true
+  timeout_seconds: 240
+  retries: 1
+  retry_sleep_seconds: 10
+  row_warning_threshold: 300000
+  save_payloads: true
+
+proxy:
+  enabled: true
+  http_proxy: http://127.0.0.1:7890
+  https_proxy: http://127.0.0.1:7890
+  all_proxy: socks5://127.0.0.1:7890
