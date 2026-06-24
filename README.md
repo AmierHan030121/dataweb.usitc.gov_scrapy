@@ -13,12 +13,10 @@
 - 每次只选择一个月份、一个金额或数量指标
 - Countries：`Use All Countries` + `Display Countries Separately`
 - Commodities：`Use All Commodities` + `Display Commodities Separately`
-- Commodity Aggregation Level：进口和出口使用 `HTS-10`
+- Commodity Aggregation Level：进口、出口和 Trade Balance 均使用 `HTS-10`
 - Programs、Rate Provision Codes、Districts：默认聚合
 - Row Options：`Combine rows onto one sheet` 和 `Export Full Data`
 - Unit Conversion：`No conversion`
-
-注意：DataWeb 前端不支持 Trade Balance 按 HTS-10 展示，脚本按页面支持的最高粒度 `HTS-6` 处理 Trade Balance。
 
 ## 文件命名
 

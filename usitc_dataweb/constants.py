@@ -101,7 +101,7 @@ FLOW_DEFINITIONS: dict[str, TradeFlow] = {
         trade_type="Balance",
         file_prefix="BAL_TradeBalance",
         display_name="Trade Balance",
-        default_level="6",
+        default_level="10",
         measures=(
             Measure(
                 "FAS_VALUE-GEN_CUSTOMS_VALUE",
