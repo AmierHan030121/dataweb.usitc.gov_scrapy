@@ -18,8 +18,8 @@ directories:
 runtime:
   dry_run: false
   skip_existing: true
-  timeout_seconds: 240
-  retries: 1
-  retry_sleep_seconds: 10
+  timeout_seconds: 600
+  retries: 2
+  retry_sleep_seconds: 60
   row_warning_threshold: 300000
   save_payloads: true

@@ -74,8 +74,6 @@ class DataWebClient:
         for attempt in range(self.retries + 1):
             try:
                 return self._download_excel_once(payload, error_path)
-            except DataWebMaintenanceError:
-                raise
             except Exception as exc:
                 last_error = exc
                 if attempt < self.retries:
