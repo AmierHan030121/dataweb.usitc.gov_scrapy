@@ -31,6 +31,7 @@ class DataWebClient:
         self.retries = retries
         self.retry_sleep_seconds = retry_sleep_seconds
         self.session = requests.Session()
+        self.session.trust_env = False
         self.session.headers.update(
             {
                 "Accept": "application/json, text/plain, */*",

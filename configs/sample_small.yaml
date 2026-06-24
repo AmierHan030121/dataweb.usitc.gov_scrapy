@@ -1,4 +1,4 @@
-# Small smoke test: one month, one flow, one measure, one HTS2 chapter.
+# Small smoke test: one month, one flow, one measure, full HTS-10 download.
 year: 2026
 months: [4]
 flows: [import_general]
@@ -7,8 +7,8 @@ measures:
   import_general: [CIF]
 
 split:
-  strategy: hts2
-  hts2_chapters: ["01"]
+  strategy: none
+  hts2_chapters: []
 
 directories:
   downloads: downloads
@@ -18,8 +18,10 @@ directories:
 runtime:
   dry_run: false
   skip_existing: true
-  timeout_seconds: 600
+  timeout_seconds: 60
+  download_timeout_seconds: 360
+  headless: false
   retries: 2
-  retry_sleep_seconds: 60
+  retry_sleep_seconds: 30
   row_warning_threshold: 300000
-  save_payloads: true
+  save_payloads: false

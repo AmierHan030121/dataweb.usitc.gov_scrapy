@@ -6,9 +6,6 @@ from typing import Any
 
 import yaml
 
-from .constants import DEFAULT_HTS2_CHAPTERS
-
-
 @dataclass(frozen=True)
 class RuntimeConfig:
     year: int
@@ -23,6 +20,8 @@ class RuntimeConfig:
     skip_existing: bool
     dry_run: bool
     timeout_seconds: int
+    download_timeout_seconds: int
+    headless: bool
     retries: int
     retry_sleep_seconds: float
     row_warning_threshold: int
@@ -54,8 +53,6 @@ def load_config(path: str | Path) -> RuntimeConfig:
     runtime_raw = raw.get("runtime") or {}
 
     hts2_chapters = tuple(str(ch).zfill(2) for ch in _as_tuple(split_raw.get("hts2_chapters")))
-    if not hts2_chapters:
-        hts2_chapters = DEFAULT_HTS2_CHAPTERS
 
     months = tuple(int(month) for month in _as_tuple(raw.get("months")))
     if not months:
@@ -76,11 +73,13 @@ def load_config(path: str | Path) -> RuntimeConfig:
         output_dir=Path(dirs_raw.get("downloads", "downloads")),
         payload_dir=Path(dirs_raw.get("payloads", "output/payloads")),
         log_dir=Path(dirs_raw.get("logs", "logs")),
-        split_strategy=str(split_raw.get("strategy", "hts2")).lower(),
+        split_strategy=str(split_raw.get("strategy", "none")).lower(),
         hts2_chapters=hts2_chapters,
         skip_existing=bool(runtime_raw.get("skip_existing", True)),
         dry_run=bool(runtime_raw.get("dry_run", False)),
         timeout_seconds=int(runtime_raw.get("timeout_seconds", 240)),
+        download_timeout_seconds=int(runtime_raw.get("download_timeout_seconds", 240)),
+        headless=bool(runtime_raw.get("headless", False)),
         retries=int(runtime_raw.get("retries", 2)),
         retry_sleep_seconds=float(runtime_raw.get("retry_sleep_seconds", 15)),
         row_warning_threshold=int(runtime_raw.get("row_warning_threshold", 300000)),
