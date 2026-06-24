@@ -68,18 +68,6 @@ python -m usitc_dataweb --config configs/default.yaml --dry-run
 python -m usitc_dataweb --config configs/sample_small.yaml --no-split
 ```
 
-## 代理
-
-配置文件默认启用本机 `7890` 代理：
-
-```yaml
-proxy:
-  enabled: true
-  http_proxy: http://127.0.0.1:7890
-  https_proxy: http://127.0.0.1:7890
-  all_proxy: socks5://127.0.0.1:7890
-```
-
 ## 30 万行限制处理
 
 DataWeb 单张表数据量过大时容易失败。脚本默认按 HTS2 章节拆分：

@@ -137,9 +137,3 @@ runtime:
   retry_sleep_seconds: 15
   row_warning_threshold: 300000
   save_payloads: true
-
-proxy:
-  enabled: true
-  http_proxy: http://127.0.0.1:7890
-  https_proxy: http://127.0.0.1:7890
-  all_proxy: socks5://127.0.0.1:7890

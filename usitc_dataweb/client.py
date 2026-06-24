@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import base64
 import json
-import os
 import time
 from pathlib import Path
 from typing import Any
 
 import requests
 
-from .config import ProxyConfig
 from .constants import PRESENTATION_URL, SERVICE_BASE_URL
 
 
@@ -25,7 +23,6 @@ class DataWebClient:
     def __init__(
         self,
         *,
-        proxy: ProxyConfig,
         timeout_seconds: int = 240,
         retries: int = 2,
         retry_sleep_seconds: float = 15,
@@ -45,16 +42,6 @@ class DataWebClient:
                 ),
             }
         )
-        if proxy.enabled:
-            os.environ["HTTP_PROXY"] = proxy.http_proxy
-            os.environ["HTTPS_PROXY"] = proxy.https_proxy
-            os.environ["ALL_PROXY"] = proxy.all_proxy
-            self.session.proxies.update(
-                {
-                    "http": proxy.http_proxy,
-                    "https": proxy.https_proxy,
-                }
-            )
 
     def warmup(self) -> dict[str, Any]:
         self.session.get(

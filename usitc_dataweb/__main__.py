@@ -62,7 +62,6 @@ def main() -> int:
         client: DataWebClient | None = None
         if not config.dry_run:
             client = DataWebClient(
-                proxy=config.proxy,
                 timeout_seconds=config.timeout_seconds,
                 retries=config.retries,
                 retry_sleep_seconds=config.retry_sleep_seconds,

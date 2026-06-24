@@ -10,14 +10,6 @@ from .constants import DEFAULT_HTS2_CHAPTERS
 
 
 @dataclass(frozen=True)
-class ProxyConfig:
-    enabled: bool = True
-    http_proxy: str = "http://127.0.0.1:7890"
-    https_proxy: str = "http://127.0.0.1:7890"
-    all_proxy: str = "socks5://127.0.0.1:7890"
-
-
-@dataclass(frozen=True)
 class RuntimeConfig:
     year: int
     months: tuple[int, ...]
@@ -35,7 +27,6 @@ class RuntimeConfig:
     retry_sleep_seconds: float
     row_warning_threshold: int
     save_payloads: bool
-    proxy: ProxyConfig
 
 
 def _as_tuple(value: Any) -> tuple[Any, ...]:
@@ -49,14 +40,6 @@ def _as_tuple(value: Any) -> tuple[Any, ...]:
 def load_config(path: str | Path) -> RuntimeConfig:
     config_path = Path(path)
     raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-
-    proxy_raw = raw.get("proxy") or {}
-    proxy = ProxyConfig(
-        enabled=bool(proxy_raw.get("enabled", True)),
-        http_proxy=str(proxy_raw.get("http_proxy", "http://127.0.0.1:7890")),
-        https_proxy=str(proxy_raw.get("https_proxy", "http://127.0.0.1:7890")),
-        all_proxy=str(proxy_raw.get("all_proxy", "socks5://127.0.0.1:7890")),
-    )
 
     measures_raw = raw.get("measures") or {}
     measures: dict[str, tuple[str, ...] | str] = {}
@@ -102,5 +85,4 @@ def load_config(path: str | Path) -> RuntimeConfig:
         retry_sleep_seconds=float(runtime_raw.get("retry_sleep_seconds", 15)),
         row_warning_threshold=int(runtime_raw.get("row_warning_threshold", 300000)),
         save_payloads=bool(runtime_raw.get("save_payloads", True)),
-        proxy=proxy,
     )
