@@ -1,9 +1,24 @@
 import unittest
 
-from usitc_dataweb.browser_downloader import run_with_retries
+from usitc_dataweb.browser_downloader import choose_commodity_level, run_with_retries
+from usitc_dataweb.__main__ import _download_success_message
 
 
 class BrowserDownloaderTests(unittest.TestCase):
+    def test_choose_commodity_level_prefers_requested_level(self):
+        selected = choose_commodity_level("10", ["2", "4", "6", "8", "10"])
+
+        self.assertEqual("10", selected)
+
+    def test_choose_commodity_level_falls_back_to_hts6(self):
+        selected = choose_commodity_level("10", ["2", "4", "6"])
+
+        self.assertEqual("6", selected)
+
+    def test_choose_commodity_level_fails_when_no_usable_level_exists(self):
+        with self.assertRaisesRegex(ValueError, "HTS-10 nor HTS-6"):
+            choose_commodity_level("10", ["2", "4"])
+
     def test_run_with_retries_retries_transient_failures(self):
         attempts = []
 
@@ -29,6 +44,30 @@ class BrowserDownloaderTests(unittest.TestCase):
             run_with_retries(operation, retries=2, retry_sleep_seconds=0)
 
         self.assertEqual(3, len(attempts))
+
+    def test_download_success_message_records_commodity_level_fallback(self):
+        message = _download_success_message(
+            requested_commodity_level="10",
+            actual_commodity_level="6",
+            rows=100,
+            row_warning_threshold=300000,
+        )
+
+        self.assertEqual("commodity level fallback: requested HTS-10, used HTS-6", message)
+
+    def test_download_success_message_combines_row_warning(self):
+        message = _download_success_message(
+            requested_commodity_level="10",
+            actual_commodity_level="6",
+            rows=300001,
+            row_warning_threshold=300000,
+        )
+
+        self.assertEqual(
+            "commodity level fallback: requested HTS-10, used HTS-6; "
+            "row count 300001 exceeds configured threshold",
+            message,
+        )
 
 
 if __name__ == "__main__":

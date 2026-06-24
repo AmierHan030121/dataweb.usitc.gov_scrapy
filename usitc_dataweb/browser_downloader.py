@@ -21,6 +21,14 @@ class BrowserDownloadError(RuntimeError):
     pass
 
 
+def choose_commodity_level(requested_level: str, available_levels: list[str]) -> str:
+    if requested_level in available_levels:
+        return requested_level
+    if "6" in available_levels:
+        return "6"
+    raise ValueError("DataWeb page supports neither HTS-10 nor HTS-6 for this trade flow.")
+
+
 def run_with_retries(operation, *, retries: int, retry_sleep_seconds: float):
     last_error: Exception | None = None
     for attempt in range(retries + 1):
@@ -75,17 +83,18 @@ class BrowserDownloader:
         if self._playwright is not None:
             self._playwright.stop()
 
-    def download_task(self, task: DownloadTask, output_path: Path) -> None:
+    def download_task(self, task: DownloadTask, output_path: Path) -> str:
         page = self._require_page()
         page.goto(f"{PRESENTATION_URL}/trade/search/Import/HTS", wait_until="domcontentloaded")
         self._dismiss_alerts(page)
         self._set_step_1(page, task)
         self._set_step_2(page, task)
         self._set_step_3(page)
-        self._set_step_4(page, task)
+        actual_level = self._set_step_4(page, task)
         self._set_step_9(page)
         self._set_step_10(page)
         self._download(page, output_path)
+        return actual_level
 
     def _require_page(self) -> Any:
         if self._page is None:
@@ -137,12 +146,13 @@ class BrowserDownloader:
         self._select_by_value(page, "countriesSelectedTab", "all")
         self._select_by_value(page, "countryAggregation", "Break Out Countries")
 
-    def _set_step_4(self, page: Any, task: DownloadTask) -> None:
+    def _set_step_4(self, page: Any, task: DownloadTask) -> str:
         self._remove_survey_overlays(page)
         self._select_by_value(page, "commoditiesSelectedTab", "all")
         self._select_by_value(page, "commodityAggregation", "Break Out Commodities")
-        self._select_by_value(page, "commodityAggregationLevel", task.commodity_level)
+        actual_level = self._select_commodity_aggregation_level(page, task.commodity_level)
         self._uncheck_if_present(page, "Show Details")
+        return actual_level
 
     def _set_step_9(self, page: Any) -> None:
         self._remove_survey_overlays(page)
@@ -190,6 +200,15 @@ class BrowserDownloader:
 
     def _select_by_value(self, page: Any, element_id: str, value: str) -> None:
         page.locator(f"#{element_id}").select_option(value=value)
+
+    def _select_commodity_aggregation_level(self, page: Any, requested_level: str) -> str:
+        locator = page.locator("#commodityAggregationLevel")
+        values = locator.locator("option").evaluate_all(
+            """options => options.map((option) => option.value).filter(Boolean)"""
+        )
+        actual_level = choose_commodity_level(requested_level, values)
+        locator.select_option(value=actual_level)
+        return actual_level
 
     def _check_if_present(self, page: Any, label: str) -> None:
         try:

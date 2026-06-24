@@ -1,6 +1,6 @@
 # USITC DataWeb 美国进出口月度数据下载脚本
 
-这个项目默认使用 Python + Playwright 控制真实浏览器，复刻 DataWeb 页面手动下载流程。当前默认不再按 `HTS01~HTS99` 拆分，而是每个贸易类型、每个数据指标、每个月下载一张完整 HTS-10 Excel。
+这个项目默认使用 Python + Playwright 控制真实浏览器，复刻 DataWeb 页面手动下载流程。当前默认不再按 `HTS01~HTS99` 拆分，而是每个贸易类型、每个数据指标、每个月下载一张完整 Excel。脚本会优先选择 HTS-10；如果 DataWeb 当前页面没有 HTS-10 选项，则自动改用页面支持的 HTS-6，并在 `logs/manifest.csv` 的 `message` 字段记录。
 
 下载页面：
 
@@ -13,7 +13,7 @@ https://dataweb.usitc.gov/trade/search/Import/HTS
 - Step 1：按任务选择贸易类型，Classification System 固定为 `HTS Items`
 - Step 2：每次只选择一个数据指标、一个月份、`Monthly`
 - Step 3：`Use All Countries` + `Display Countries Separately`
-- Step 4：`Use All Commodities` + `Display Commodities Separately` + `HTS-10`
+- Step 4：`Use All Commodities` + `Display Commodities Separately` + 优先 `HTS-10`，没有 `HTS-10` 时自动使用 `HTS-6`
 - Step 4：如果出现 `Show Details`，脚本会尝试取消勾选
 - Step 9：`Combine Rows Onto One Sheet` + `Export Full Data`
 - Step 10：`No conversion`
@@ -98,6 +98,8 @@ runtime:
 ## 30 万行限制
 
 默认不拆 HTS，因为手工验证表明页面全量 HTS-10 下载可以成功。如果后续某个文件下载失败，或者下载后行数超过 30 万，再把 HTS2 拆分作为备用策略单独启用。
+
+注意：Trade Balance 页面可能不提供 HTS-10 选项。脚本会先尝试 HTS-10，发现页面不可用后自动选择 HTS-6；这属于 DataWeb 页面选项限制，不是下载报错。
 
 ## 输出和日志
 

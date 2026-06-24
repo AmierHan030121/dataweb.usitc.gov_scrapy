@@ -88,15 +88,18 @@ def main() -> int:
                 print(f"[{index}/{len(tasks)}] browser download {task.filename}")
                 try:
                     assert downloader is not None
-                    run_with_retries(
+                    actual_commodity_level = run_with_retries(
                         lambda: downloader.download_task(task, output_path),
                         retries=config.retries,
                         retry_sleep_seconds=config.retry_sleep_seconds,
                     )
                     rows = count_xlsx_rows(output_path)
-                    message = ""
-                    if rows is not None and rows > config.row_warning_threshold:
-                        message = f"row count {rows} exceeds configured threshold"
+                    message = _download_success_message(
+                        requested_commodity_level=task.commodity_level,
+                        actual_commodity_level=actual_commodity_level,
+                        rows=rows,
+                        row_warning_threshold=config.row_warning_threshold,
+                    )
                     _write_manifest(writer, "ok", task, output_path, rows, message)
                     manifest_file.flush()
                 except Exception as exc:
@@ -115,6 +118,24 @@ def _replace_config(config, **changes):
     values = {field: getattr(config, field) for field in config.__dataclass_fields__}
     values.update(changes)
     return type(config)(**values)
+
+
+def _download_success_message(
+    *,
+    requested_commodity_level: str,
+    actual_commodity_level: str,
+    rows: int | None,
+    row_warning_threshold: int,
+) -> str:
+    messages: list[str] = []
+    if actual_commodity_level != requested_commodity_level:
+        messages.append(
+            f"commodity level fallback: requested HTS-{requested_commodity_level}, "
+            f"used HTS-{actual_commodity_level}"
+        )
+    if rows is not None and rows > row_warning_threshold:
+        messages.append(f"row count {rows} exceeds configured threshold")
+    return "; ".join(messages)
 
 
 def _write_manifest(writer, status, task, path: Path, rows: int | None, message: str) -> None:
