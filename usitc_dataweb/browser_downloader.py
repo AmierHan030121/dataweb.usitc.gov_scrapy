@@ -15,6 +15,7 @@ class BrowserSettings:
     headless: bool
     navigation_timeout_seconds: int
     download_timeout_seconds: int
+    form_settle_seconds: float
 
 
 class BrowserDownloadError(RuntimeError):
@@ -27,6 +28,11 @@ def choose_commodity_level(requested_level: str, available_levels: list[str]) ->
     if "6" in available_levels:
         return "6"
     raise ValueError("DataWeb page supports neither HTS-10 nor HTS-6 for this trade flow.")
+
+
+def wait_if_needed(seconds: float, *, sleep=time.sleep) -> None:
+    if seconds > 0:
+        sleep(seconds)
 
 
 def run_with_retries(operation, *, retries: int, retry_sleep_seconds: float):
@@ -93,6 +99,7 @@ class BrowserDownloader:
         actual_level = self._set_step_4(page, task)
         self._set_step_9(page)
         self._set_step_10(page)
+        wait_if_needed(self.settings.form_settle_seconds)
         self._download(page, output_path)
         return actual_level
 

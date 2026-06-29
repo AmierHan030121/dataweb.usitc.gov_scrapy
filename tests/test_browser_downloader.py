@@ -1,7 +1,7 @@
 import unittest
 
-from usitc_dataweb.browser_downloader import choose_commodity_level, run_with_retries
-from usitc_dataweb.__main__ import _download_success_message
+from usitc_dataweb.browser_downloader import choose_commodity_level, run_with_retries, wait_if_needed
+from usitc_dataweb.__main__ import _download_success_message, _sleep_between_tasks
 
 
 class BrowserDownloaderTests(unittest.TestCase):
@@ -68,6 +68,44 @@ class BrowserDownloaderTests(unittest.TestCase):
             "row count 300001 exceeds configured threshold",
             message,
         )
+
+    def test_wait_if_needed_calls_sleep_for_positive_seconds(self):
+        calls = []
+
+        wait_if_needed(5, sleep=calls.append)
+
+        self.assertEqual([5], calls)
+
+    def test_wait_if_needed_skips_zero_seconds(self):
+        calls = []
+
+        wait_if_needed(0, sleep=calls.append)
+
+        self.assertEqual([], calls)
+
+    def test_sleep_between_tasks_skips_last_task(self):
+        calls = []
+
+        _sleep_between_tasks(
+            current_index=3,
+            total_tasks=3,
+            seconds=60,
+            sleep=calls.append,
+        )
+
+        self.assertEqual([], calls)
+
+    def test_sleep_between_tasks_waits_before_next_task(self):
+        calls = []
+
+        _sleep_between_tasks(
+            current_index=2,
+            total_tasks=3,
+            seconds=60,
+            sleep=calls.append,
+        )
+
+        self.assertEqual([60], calls)
 
 
 if __name__ == "__main__":

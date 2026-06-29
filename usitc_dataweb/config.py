@@ -24,6 +24,8 @@ class RuntimeConfig:
     headless: bool
     retries: int
     retry_sleep_seconds: float
+    form_settle_seconds: float
+    task_sleep_seconds: float
     row_warning_threshold: int
     save_payloads: bool
 
@@ -82,6 +84,8 @@ def load_config(path: str | Path) -> RuntimeConfig:
         headless=bool(runtime_raw.get("headless", False)),
         retries=int(runtime_raw.get("retries", 2)),
         retry_sleep_seconds=float(runtime_raw.get("retry_sleep_seconds", 15)),
+        form_settle_seconds=float(runtime_raw.get("form_settle_seconds", 0)),
+        task_sleep_seconds=float(runtime_raw.get("task_sleep_seconds", 0)),
         row_warning_threshold=int(runtime_raw.get("row_warning_threshold", 300000)),
         save_payloads=bool(runtime_raw.get("save_payloads", True)),
     )

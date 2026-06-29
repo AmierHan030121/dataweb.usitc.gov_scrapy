@@ -1,0 +1,32 @@
+year: 2023
+months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+flows:
+  - import_general
+  - export_total
+
+measures:
+  import_general: [CIF]
+  export_total: [FAS]
+
+split:
+  strategy: none
+  hts2_chapters: []
+
+directories:
+  downloads: downloads
+  payloads: output/payloads
+  logs: logs
+
+runtime:
+  dry_run: false
+  skip_existing: true
+  timeout_seconds: 60
+  download_timeout_seconds: 360
+  headless: false
+  retries: 2
+  retry_sleep_seconds: 120
+  form_settle_seconds: 5
+  task_sleep_seconds: 60
+  row_warning_threshold: 300000
+  save_payloads: false

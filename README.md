@@ -91,9 +91,13 @@ runtime:
   skip_existing: true
   retries: 2
   retry_sleep_seconds: 30
+  form_settle_seconds: 5
+  task_sleep_seconds: 60
 ```
 
 `download_timeout_seconds` 建议大于手工下载耗时。你手工验证约 90 秒，默认设置为 360 秒。`retries` 是单个文件的任务级重试次数，用于处理 DataWeb 偶发的页面超时、网络变化和下载未触发。
+
+`form_settle_seconds` 是每个任务完成 Step 1-10 参数设置后、点击 `Download Data` 前的等待时间。`task_sleep_seconds` 是一个真实下载任务结束后、进入下一个任务前的等待时间。批量下载多个月份时建议保持较保守节奏，例如 `form_settle_seconds: 5`、`task_sleep_seconds: 60`，降低被 DataWeb/Akamai 限流的概率。
 
 ## 30 万行限制
 

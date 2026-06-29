@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -63,6 +64,7 @@ def main() -> int:
                     headless=config.headless,
                     navigation_timeout_seconds=config.timeout_seconds,
                     download_timeout_seconds=config.download_timeout_seconds,
+                    form_settle_seconds=config.form_settle_seconds,
                 )
             )
 
@@ -107,6 +109,12 @@ def main() -> int:
                     manifest_file.flush()
                     print(f"ERROR {task.filename}: {exc}", file=sys.stderr)
                     continue
+                finally:
+                    _sleep_between_tasks(
+                        current_index=index,
+                        total_tasks=len(tasks),
+                        seconds=config.task_sleep_seconds,
+                    )
         finally:
             if downloader_cm is not None:
                 downloader_cm.__exit__(None, None, None)
@@ -136,6 +144,18 @@ def _download_success_message(
     if rows is not None and rows > row_warning_threshold:
         messages.append(f"row count {rows} exceeds configured threshold")
     return "; ".join(messages)
+
+
+def _sleep_between_tasks(
+    *,
+    current_index: int,
+    total_tasks: int,
+    seconds: float,
+    sleep=time.sleep,
+) -> None:
+    if current_index < total_tasks and seconds > 0:
+        print(f"Waiting {seconds:g}s before next task...")
+        sleep(seconds)
 
 
 def _write_manifest(writer, status, task, path: Path, rows: int | None, message: str) -> None:

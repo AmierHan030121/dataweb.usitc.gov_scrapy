@@ -14,6 +14,8 @@ class RuntimeConfigTests(unittest.TestCase):
         self.assertFalse(config.save_payloads)
         self.assertEqual(2, config.retries)
         self.assertEqual(30, config.retry_sleep_seconds)
+        self.assertEqual(5, config.form_settle_seconds)
+        self.assertEqual(60, config.task_sleep_seconds)
 
 
 if __name__ == "__main__":
