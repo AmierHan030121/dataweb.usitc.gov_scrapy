@@ -6,11 +6,25 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Callable
 
-from .browser_downloader import BrowserDownloader, BrowserSettings, run_with_retries
+from .browser_downloader import BrowserDownloader, BrowserSettings
 from .config import load_config
 from .tasks import build_tasks, task_output_path
 from .xlsx import count_xlsx_rows
+
+
+RECOVERABLE_ERROR_TEXT = (
+    "Due to current high volume",
+    "Timed out waiting",
+    "Access Denied",
+    "net::ERR_TIMED_OUT",
+    "net::ERR_NETWORK_CHANGED",
+    "0 Unknown Error",
+    "Unknown Error",
+    "Download failed",
+    "Page.goto",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -55,10 +69,9 @@ def main() -> int:
         if write_header:
             writer.writeheader()
 
-        downloader_cm: BrowserDownloader | None = None
-        downloader: BrowserDownloader | None = None
+        browser_session: BrowserSession | None = None
         if not config.dry_run:
-            downloader_cm = BrowserDownloader(
+            browser_session = BrowserSession(
                 BrowserSettings(
                     download_dir=config.output_dir,
                     headless=config.headless,
@@ -69,8 +82,6 @@ def main() -> int:
             )
 
         try:
-            if downloader_cm is not None:
-                downloader = downloader_cm.__enter__()
             for index, task in enumerate(tasks, start=1):
                 output_path = task_output_path(config.output_dir, task)
 
@@ -89,11 +100,22 @@ def main() -> int:
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 print(f"[{index}/{len(tasks)}] browser download {task.filename}")
                 try:
-                    assert downloader is not None
-                    actual_commodity_level = run_with_retries(
-                        lambda: downloader.download_task(task, output_path),
-                        retries=config.retries,
-                        retry_sleep_seconds=config.retry_sleep_seconds,
+                    assert browser_session is not None
+                    actual_commodity_level = _download_with_browser_recovery(
+                        browser_session,
+                        task=task,
+                        output_path=output_path,
+                        max_attempts=config.retries,
+                        cooldown_seconds=config.browser_cooldown_seconds,
+                        restart_browser_on_error=config.restart_browser_on_error,
+                        on_retry=lambda attempt, exc, task=task, output_path=output_path: _record_retry(
+                            writer,
+                            manifest_file,
+                            task,
+                            output_path,
+                            attempt,
+                            exc,
+                        ),
                     )
                     rows = count_xlsx_rows(output_path)
                     message = _download_success_message(
@@ -116,8 +138,8 @@ def main() -> int:
                         seconds=config.task_sleep_seconds,
                     )
         finally:
-            if downloader_cm is not None:
-                downloader_cm.__exit__(None, None, None)
+            if browser_session is not None:
+                browser_session.close()
 
     return 0
 
@@ -126,6 +148,67 @@ def _replace_config(config, **changes):
     values = {field: getattr(config, field) for field in config.__dataclass_fields__}
     values.update(changes)
     return type(config)(**values)
+
+
+class BrowserSession:
+    def __init__(self, settings: BrowserSettings) -> None:
+        self.settings = settings
+        self._cm: BrowserDownloader | None = None
+        self._downloader: BrowserDownloader | None = None
+
+    def get(self) -> BrowserDownloader:
+        if self._downloader is None:
+            self._cm = BrowserDownloader(self.settings)
+            self._downloader = self._cm.__enter__()
+        return self._downloader
+
+    def restart(self) -> None:
+        self.close()
+
+    def close(self) -> None:
+        if self._cm is not None:
+            self._cm.__exit__(None, None, None)
+        self._cm = None
+        self._downloader = None
+
+
+def _download_with_browser_recovery(
+    browser_session,
+    *,
+    task,
+    output_path: Path,
+    max_attempts: int,
+    cooldown_seconds: float,
+    restart_browser_on_error: bool,
+    sleep: Callable[[float], None] = time.sleep,
+    on_retry: Callable[[int, Exception], None] | None = None,
+) -> str:
+    attempts = max(1, max_attempts)
+    for attempt in range(1, attempts + 1):
+        try:
+            return browser_session.get().download_task(task, output_path)
+        except Exception as exc:
+            if not _is_recoverable_download_error(exc) or attempt >= attempts:
+                raise
+            if on_retry is not None:
+                on_retry(attempt, exc)
+            if restart_browser_on_error:
+                browser_session.restart()
+            if cooldown_seconds > 0:
+                print(f"Recoverable DataWeb error; waiting {cooldown_seconds:g}s before retry {attempt + 1}/{attempts}...")
+                sleep(cooldown_seconds)
+    raise RuntimeError("unreachable download retry state")
+
+
+def _is_recoverable_download_error(exc: Exception) -> bool:
+    message = str(exc)
+    return any(text in message for text in RECOVERABLE_ERROR_TEXT)
+
+
+def _record_retry(writer, manifest_file, task, output_path: Path, attempt: int, exc: Exception) -> None:
+    _write_manifest(writer, "retry", task, output_path, None, f"attempt {attempt} failed: {exc}")
+    manifest_file.flush()
+    print(f"RETRY {task.filename} attempt {attempt}: {exc}", file=sys.stderr)
 
 
 def _download_success_message(

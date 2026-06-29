@@ -21,9 +21,11 @@ runtime:
   timeout_seconds: 60
   download_timeout_seconds: 360
   headless: false
-  retries: 2
+  retries: 8
   retry_sleep_seconds: 30
   form_settle_seconds: 2
   task_sleep_seconds: 0
+  restart_browser_on_error: true
+  browser_cooldown_seconds: 60
   row_warning_threshold: 300000
   save_payloads: false

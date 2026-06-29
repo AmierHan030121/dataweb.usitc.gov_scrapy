@@ -89,15 +89,19 @@ runtime:
   download_timeout_seconds: 360
   headless: false
   skip_existing: true
-  retries: 2
+  retries: 8
   retry_sleep_seconds: 30
   form_settle_seconds: 5
   task_sleep_seconds: 60
+  restart_browser_on_error: true
+  browser_cooldown_seconds: 60
 ```
 
-`download_timeout_seconds` 建议大于手工下载耗时。你手工验证约 90 秒，默认设置为 360 秒。`retries` 是单个文件的任务级重试次数，用于处理 DataWeb 偶发的页面超时、网络变化和下载未触发。
+`download_timeout_seconds` 建议大于手工下载耗时。你手工验证约 90 秒，默认设置为 360 秒。`retries` 是单个文件最多尝试次数，默认 8 次，用于处理 DataWeb 偶发的页面超时、网络变化、下载未触发和高负载错误。
 
 `form_settle_seconds` 是每个任务完成 Step 1-10 参数设置后、点击 `Download Data` 前的等待时间。`task_sleep_seconds` 是一个真实下载任务结束后、进入下一个任务前的等待时间。批量下载多个月份时建议保持较保守节奏，例如 `form_settle_seconds: 5`、`task_sleep_seconds: 60`，降低被 DataWeb/Akamai 限流的概率。
+
+如果出现 `Due to current high volume`、`Access Denied`、`0 Unknown Error`、`net::ERR_TIMED_OUT`、下载超时等可恢复错误，且 `restart_browser_on_error: true`，脚本会关闭当前自动浏览器，等待 `browser_cooldown_seconds` 秒，然后重新打开浏览器重试当前文件，直到该文件成功或达到 `retries` 上限。
 
 ## 30 万行限制
 

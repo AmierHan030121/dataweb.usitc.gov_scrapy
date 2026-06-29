@@ -26,6 +26,8 @@ class RuntimeConfig:
     retry_sleep_seconds: float
     form_settle_seconds: float
     task_sleep_seconds: float
+    restart_browser_on_error: bool
+    browser_cooldown_seconds: float
     row_warning_threshold: int
     save_payloads: bool
 
@@ -86,6 +88,8 @@ def load_config(path: str | Path) -> RuntimeConfig:
         retry_sleep_seconds=float(runtime_raw.get("retry_sleep_seconds", 15)),
         form_settle_seconds=float(runtime_raw.get("form_settle_seconds", 0)),
         task_sleep_seconds=float(runtime_raw.get("task_sleep_seconds", 0)),
+        restart_browser_on_error=bool(runtime_raw.get("restart_browser_on_error", True)),
+        browser_cooldown_seconds=float(runtime_raw.get("browser_cooldown_seconds", 60)),
         row_warning_threshold=int(runtime_raw.get("row_warning_threshold", 300000)),
         save_payloads=bool(runtime_raw.get("save_payloads", True)),
     )
